@@ -24,6 +24,7 @@ public final class OutlinerPanel extends EditorPanel {
         String lastSection = "";
         for (SceneTreeNode node : new EditorSceneIndex(this.state.project()).buildTree()) {
             String section = switch (node.type()) {
+                case BLUEPRINT -> "Blueprints";
                 case TRIGGER_ZONE -> "Zones";
                 case EVENT -> "Events";
                 case CUTSCENE, CAMERA_KEYFRAME -> "Cutscenes";
@@ -50,6 +51,7 @@ public final class OutlinerPanel extends EditorPanel {
         String lastSection = "";
         for (SceneTreeNode node : new EditorSceneIndex(this.state.project()).buildTree()) {
             String section = switch (node.type()) {
+                case BLUEPRINT -> "Blueprints";
                 case TRIGGER_ZONE -> "Zones";
                 case EVENT -> "Events";
                 case CUTSCENE, CAMERA_KEYFRAME -> "Cutscenes";
@@ -69,6 +71,7 @@ public final class OutlinerPanel extends EditorPanel {
                     this.state.setSelection(EditorSelection.pos2(node.objectId()));
                 } else {
                     this.state.setSelection(switch (node.type()) {
+                        case BLUEPRINT -> EditorSelection.blueprint(node.objectId());
                         case TRIGGER_ZONE -> EditorSelection.zone(node.objectId());
                         case EVENT -> EditorSelection.event(node.objectId());
                         case CUTSCENE -> EditorSelection.cutscene(node.objectId());

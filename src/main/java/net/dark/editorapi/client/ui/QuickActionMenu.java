@@ -1,7 +1,7 @@
 package net.dark.editorapi.client.ui;
 
-import net.dark.editorapi.api.action.builtin.BuiltinEditorActions;
 import net.dark.editorapi.client.state.EditorClientState;
+import net.dark.editorapi.client.state.EditorSelectionType;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -11,17 +11,15 @@ public final class QuickActionMenu {
     private boolean open;
     private int x;
     private int y;
-    private Context context = Context.SCENE;
 
     public QuickActionMenu(EditorClientState state) {
         this.state = state;
     }
 
-    public void open(int x, int y, Context context) {
+    public void open(int x, int y) {
         this.open = true;
         this.x = x;
         this.y = y;
-        this.context = context;
     }
 
     public void close() {
@@ -37,7 +35,7 @@ public final class QuickActionMenu {
             return;
         }
         String[] items = items();
-        int width = 112;
+        int width = 128;
         int height = items.length * 16 + 4;
         context.fill(this.x, this.y, this.x + width, this.y + height, 0xEE121821);
         context.drawBorder(this.x, this.y, width, height, 0xFF415067);
@@ -54,7 +52,7 @@ public final class QuickActionMenu {
             return false;
         }
         String[] items = items();
-        int width = 112;
+        int width = 128;
         if (mouseX < this.x || mouseX > this.x + width) {
             this.open = false;
             return false;
@@ -62,14 +60,7 @@ public final class QuickActionMenu {
         for (int i = 0; i < items.length; i++) {
             int rowY = this.y + 2 + i * 16;
             if (mouseY >= rowY && mouseY <= rowY + 14) {
-                switch (i) {
-                    case 0 -> primaryAction();
-                    case 1 -> secondaryAction();
-                    case 2 -> tertiaryAction();
-                    case 3 -> quaternaryAction();
-                    default -> {
-                    }
-                }
+                handleIndex(i);
                 this.open = false;
                 return true;
             }
@@ -79,52 +70,32 @@ public final class QuickActionMenu {
     }
 
     private String[] items() {
-        return switch (this.context) {
-            case SCENE -> new String[]{"Add Zone", "Set Pos1", "Set Pos2", "Add Event"};
-            case EVENTS -> new String[]{"Add Event", "Add Title", "Add Sound", "Add Linked Cut"};
-            case CUTSCENES -> new String[]{"Add Cutscene", "Add Camera Key", "Play Cutscene", "Stop Cutscene"};
-        };
-    }
-
-    private void primaryAction() {
-        switch (this.context) {
-            case SCENE -> this.state.createZone();
-            case EVENTS -> this.state.createEvent();
-            case CUTSCENES -> this.state.createCutscene();
+        if (this.state.selection().type() == EditorSelectionType.NONE) {
+            return new String[]{"Undo", "Redo", "New Zone", "New Cutscene"};
         }
+        return new String[]{"Delete", "Duplicate", "Undo", "Save Blueprint"};
     }
 
-    private void secondaryAction() {
-        switch (this.context) {
-            case SCENE -> this.state.capturePos1();
-            case EVENTS -> this.state.addActionToSelectedEvent(BuiltinEditorActions.SHOW_TITLE);
-            case CUTSCENES -> this.state.addCurrentCameraKeyframe();
-        }
-    }
-
-    private void tertiaryAction() {
-        switch (this.context) {
-            case SCENE -> this.state.capturePos2();
-            case EVENTS -> this.state.addActionToSelectedEvent(BuiltinEditorActions.PLAY_SOUND);
-            case CUTSCENES -> {
-                if (this.state.selectedCutscene() != null) {
-                    this.state.runtime().cutscenes().start(this.state.selectedCutscene().id().toString());
+    private void handleIndex(int index) {
+        if (this.state.selection().type() == EditorSelectionType.NONE) {
+            switch (index) {
+                case 0 -> this.state.undo();
+                case 1 -> this.state.redo();
+                case 2 -> this.state.createZone();
+                case 3 -> this.state.createCutscene();
+                default -> {
                 }
             }
+            return;
         }
-    }
 
-    private void quaternaryAction() {
-        switch (this.context) {
-            case SCENE -> this.state.createEvent();
-            case EVENTS -> this.state.addActionToSelectedEvent(BuiltinEditorActions.PLAY_CUTSCENE);
-            case CUTSCENES -> this.state.runtime().cutscenes().stop();
+        switch (index) {
+            case 0 -> this.state.deleteSelection();
+            case 1 -> this.state.duplicateSelection();
+            case 2 -> this.state.undo();
+            case 3 -> this.state.saveSelectionAsBlueprint();
+            default -> {
+            }
         }
-    }
-
-    public enum Context {
-        SCENE,
-        EVENTS,
-        CUTSCENES
     }
 }

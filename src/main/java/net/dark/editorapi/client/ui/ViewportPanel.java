@@ -27,10 +27,11 @@ public final class ViewportPanel extends EditorPanel {
         context.fill(centerX - 72, centerY - 1, centerX - 24, centerY + 1, 0xCC59A8F2);
         context.drawText(textRenderer, Text.literal("Viewport"), contentX + 8, contentY + 8, 0xFFE7ECF5, false);
         context.drawText(textRenderer, Text.literal("Player view is the active viewport"), contentX + 8, contentY + 22, 0xFF9FB1CD, false);
-        context.drawText(textRenderer, Text.literal("RMB: quick add menu  |  arrows: move selection"), contentX + 8, contentY + 36, 0xFF9FB1CD, false);
+        context.drawText(textRenderer, Text.literal("Right drag = look  |  WASD/E/Q move  |  F6 exits editor"), contentX + 8, contentY + 36, 0xFF9FB1CD, false);
+        context.drawText(textRenderer, Text.literal("Mode: Locked Editor  |  Tool: " + this.state.toolMode().name()), contentX + 8, contentY + 50, 0xFF9FD7A9, false);
         context.drawText(textRenderer, Text.literal("Selection: " + this.state.selection().type().name()), contentX + 8, contentY + contentHeight - 16, 0xFFFFCA5A, false);
-        if (this.state.selection().type() == EditorSelectionType.KEYFRAME) {
-            context.drawText(textRenderer, Text.literal("Gizmo: XYZ move handles shown in viewport"), contentX + 8, contentY + 50, 0xFF9FD7A9, false);
+        if (this.state.selection().type() == EditorSelectionType.KEYFRAME || this.state.selection().type() == EditorSelectionType.BLUEPRINT || this.state.selection().type() == EditorSelectionType.ZONE) {
+            context.drawText(textRenderer, Text.literal("World gizmos: G translate  |  R rotate"), contentX + 8, contentY + 64, 0xFF9FD7A9, false);
         }
     }
 }

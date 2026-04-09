@@ -17,6 +17,9 @@ public final class EditorSceneIndex {
 
     public List<SceneTreeNode> buildTree() {
         List<SceneTreeNode> nodes = new ArrayList<>();
+        for (var blueprint : this.project.blueprints().values()) {
+            nodes.add(new SceneTreeNode(blueprint.id(), null, SceneObjectType.BLUEPRINT, blueprint.name(), blueprint.zoneIds().size() + " zones", 0, blueprint.locked(), blueprint.visible()));
+        }
         for (TriggerZone zone : this.project.zones().values()) {
             nodes.add(new SceneTreeNode(zone.id(), null, SceneObjectType.TRIGGER_ZONE, zone.name(), "Zone", 0, zone.locked(), zone.visible()));
         }

@@ -56,6 +56,14 @@ public abstract class EditorPanel {
         return false;
     }
 
+    protected boolean onKeyPressed(int keyCode, int scanCode, int modifiers, int contentX, int contentY, int contentWidth, int contentHeight) {
+        return false;
+    }
+
+    protected boolean onCharTyped(char chr, int modifiers, int contentX, int contentY, int contentWidth, int contentHeight) {
+        return false;
+    }
+
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!contains(mouseX, mouseY)) {
             return false;
@@ -112,6 +120,14 @@ public abstract class EditorPanel {
         return onMouseDragged(mouseX, mouseY, button, deltaX, deltaY, contentX(), contentY(), contentWidth(), contentHeight());
     }
 
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return onKeyPressed(keyCode, scanCode, modifiers, contentX(), contentY(), contentWidth(), contentHeight());
+    }
+
+    public boolean charTyped(char chr, int modifiers) {
+        return onCharTyped(chr, modifiers, contentX(), contentY(), contentWidth(), contentHeight());
+    }
+
     protected void drawButton(DrawContext context, TextRenderer textRenderer, int x, int y, int width, int height, String label, boolean hovered, boolean active) {
         EditorWidgets.drawButton(context, textRenderer, x, y, width, height, label, hovered, active);
     }
@@ -122,6 +138,10 @@ public abstract class EditorPanel {
 
     public boolean contains(double mouseX, double mouseY) {
         return mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + this.height;
+    }
+
+    public String panelKey() {
+        return this.title;
     }
 
     private boolean inTitleBar(double mouseX, double mouseY) {

@@ -12,7 +12,7 @@ public final class EditorWidgets {
         int fill = active ? EditorPalette.ACCENT : hovered ? 0xFF374153 : 0xFF222A35;
         context.fill(x, y, x + width, y + height, fill);
         context.drawBorder(x, y, width, height, hovered ? 0xFF96A8C4 : 0xFF536178);
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal(label), x + width / 2, y + 4, active ? 0xFFFFFFFF : 0xFFD7DDE7);
+        context.drawCenteredTextWithShadow(textRenderer, Text.literal(label), x + width / 2, y + 3, active ? 0xFFFFFFFF : 0xFFD7DDE7);
     }
 
     public static void drawRow(DrawContext context, TextRenderer textRenderer, int x, int y, int width, String label, String value, boolean hovered, boolean selected) {

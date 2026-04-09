@@ -91,6 +91,7 @@ public final class BrowserPanel extends EditorPanel {
                     this.state.setSelection(EditorSelection.keyframe(node.objectId(), node.childId()));
                 } else {
                     this.state.setSelection(switch (node.type()) {
+                        case BLUEPRINT -> EditorSelection.blueprint(node.objectId());
                         case TRIGGER_ZONE -> EditorSelection.zone(node.objectId());
                         case EVENT -> EditorSelection.event(node.objectId());
                         case CUTSCENE -> EditorSelection.cutscene(node.objectId());
@@ -142,7 +143,7 @@ public final class BrowserPanel extends EditorPanel {
 
     private boolean matchesTab(SceneObjectType type) {
         return switch (this.activeTab) {
-            case SCENE -> type == SceneObjectType.TRIGGER_ZONE;
+            case SCENE -> type == SceneObjectType.TRIGGER_ZONE || type == SceneObjectType.BLUEPRINT;
             case EVENTS -> type == SceneObjectType.EVENT;
             case CUTSCENES -> type == SceneObjectType.CUTSCENE || type == SceneObjectType.CAMERA_KEYFRAME;
         };

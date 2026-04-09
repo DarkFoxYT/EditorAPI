@@ -1,6 +1,7 @@
 package net.dark.editorapi.scene;
 
 public enum SceneObjectType {
+    BLUEPRINT,
     TRIGGER_ZONE,
     EVENT,
     CUTSCENE,

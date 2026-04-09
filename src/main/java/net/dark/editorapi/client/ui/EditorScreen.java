@@ -6,7 +6,9 @@ import net.dark.editorapi.client.state.EditorClientState;
 import net.dark.editorapi.model.CutsceneDefinition;
 import net.dark.editorapi.model.CutsceneKeyframe;
 import net.dark.editorapi.model.TriggerZone;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
@@ -14,6 +16,7 @@ import org.lwjgl.glfw.GLFW;
 
 public final class EditorScreen extends Screen {
     private final EditorClientState state;
+    private final EditorLayoutStore layoutStore = new EditorLayoutStore();
     private final List<EditorPanel> panels = new ArrayList<>();
     private final QuickActionMenu quickActionMenu;
     private BrowserPanel browserPanel;
@@ -27,19 +30,25 @@ public final class EditorScreen extends Screen {
 
     @Override
     protected void init() {
+        this.layoutStore.load();
         this.panels.clear();
-        int menuWidth = Math.min(this.width - 8, 260);
         int browserWidth = Math.max(170, Math.min(220, this.width / 5));
         int inspectorWidth = Math.max(180, Math.min(220, this.width / 4));
         int timelineHeight = Math.max(100, Math.min(126, this.height / 4));
         int contentWidth = Math.max(240, this.width - browserWidth - inspectorWidth - 16);
 
-        this.panels.add(new MenuBarPanel(this.state, 4, 2, menuWidth));
-        this.browserPanel = new BrowserPanel(this.state, 4, 20, browserWidth, this.height - 24);
+        this.panels.add(new MenuBarPanel(this.state, 0, 0, this.width));
+        this.browserPanel = new BrowserPanel(this.state, 4, 24, browserWidth, this.height - 28);
         this.panels.add(this.browserPanel);
-        this.panels.add(new InspectorPanel(this.state, this.width - inspectorWidth - 4, 20, inspectorWidth, Math.max(140, this.height - 24)));
+        this.panels.add(new InspectorPanel(this.state, this.width - inspectorWidth - 4, 24, inspectorWidth, Math.max(140, this.height - 28)));
         this.timelinePanel = new TimelinePanel(this.state, browserWidth + 8, this.height - timelineHeight - 4, contentWidth, timelineHeight);
         this.panels.add(this.timelinePanel);
+
+        for (EditorPanel panel : this.panels) {
+            if (!"Menu".equals(panel.panelKey())) {
+                this.layoutStore.applyPanel(panel.panelKey(), panel);
+            }
+        }
 
         this.panels.get(0).setLocked(true);
         this.panels.get(1).setLocked(true);
@@ -60,44 +69,74 @@ public final class EditorScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         for (EditorPanel panel : this.panels) {
-            panel.render(context, this.textRenderer, mouseX, mouseY, delta);
+            if (isPanelVisible(panel) && !(panel instanceof MenuBarPanel)) {
+                panel.render(context, this.textRenderer, mouseX, mouseY, delta);
+            }
+        }
+        for (EditorPanel panel : this.panels) {
+            if (isPanelVisible(panel) && panel instanceof MenuBarPanel) {
+                panel.render(context, this.textRenderer, mouseX, mouseY, delta);
+            }
         }
         this.quickActionMenu.render(context, this.textRenderer, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 1) {
-            this.quickActionMenu.open((int) mouseX, (int) mouseY, switch (this.browserPanel.activeTab()) {
-                case SCENE -> QuickActionMenu.Context.SCENE;
-                case EVENTS -> QuickActionMenu.Context.EVENTS;
-                case CUTSCENES -> QuickActionMenu.Context.CUTSCENES;
-            });
-            return true;
-        }
-
         if (this.quickActionMenu.isOpen() && this.quickActionMenu.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
 
+        for (EditorPanel panel : this.panels) {
+            if (panel instanceof MenuBarPanel && isPanelVisible(panel) && panel.mouseClicked(mouseX, mouseY, button)) {
+                return true;
+            }
+        }
+
+        if (button == 1) {
+            if (this.state.selection().type() != net.dark.editorapi.client.state.EditorSelectionType.NONE) {
+                this.quickActionMenu.open((int) mouseX, (int) mouseY);
+                return true;
+            }
+            return false;
+        }
+
         for (int index = this.panels.size() - 1; index >= 0; index--) {
             EditorPanel panel = this.panels.get(index);
-            if (panel.mouseClicked(mouseX, mouseY, button)) {
+            if (panel instanceof MenuBarPanel) {
+                continue;
+            }
+            if (isPanelVisible(panel) && panel.mouseClicked(mouseX, mouseY, button)) {
                 this.panels.remove(index);
                 this.panels.add(panel);
                 return true;
             }
         }
+        for (EditorPanel panel : this.panels) {
+            if (isPanelVisible(panel) && panel.contains(mouseX, mouseY)) {
+                return true;
+            }
+        }
         if (button == 0) {
-            return this.state.pickHoveredGizmo();
+            if (this.state.beginGizmoDrag(mouseX, mouseY)) {
+                return true;
+            }
+            return this.state.pickWorldSelection(mouseX, mouseY);
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0 && this.state.hasActiveDrag()) {
+            this.state.endGizmoDrag();
+            return true;
+        }
         for (EditorPanel panel : this.panels) {
-            if (panel.mouseReleased(mouseX, mouseY, button)) {
+            if (isPanelVisible(panel) && panel.mouseReleased(mouseX, mouseY, button)) {
+                if (!"Menu".equals(panel.panelKey())) {
+                    this.layoutStore.savePanel(panel.panelKey(), panel);
+                }
                 return true;
             }
         }
@@ -106,8 +145,15 @@ public final class EditorScreen extends Screen {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        if (button == 0 && this.state.hasActiveDrag()) {
+            return this.state.updateGizmoDrag(mouseX, mouseY);
+        }
         for (int index = this.panels.size() - 1; index >= 0; index--) {
-            if (this.panels.get(index).mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+            EditorPanel panel = this.panels.get(index);
+            if (isPanelVisible(panel) && panel.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+                if (!"Menu".equals(panel.panelKey())) {
+                    this.layoutStore.savePanel(panel.panelKey(), panel);
+                }
                 return true;
             }
         }
@@ -116,6 +162,13 @@ public final class EditorScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        for (int index = this.panels.size() - 1; index >= 0; index--) {
+            EditorPanel panel = this.panels.get(index);
+            if (isPanelVisible(panel) && panel.keyPressed(keyCode, scanCode, modifiers)) {
+                return true;
+            }
+        }
+
         if (keyCode == GLFW.GLFW_KEY_SPACE) {
             if (this.timelinePanel != null && this.timelinePanel.handleSpacebar()) {
                 return true;
@@ -124,6 +177,37 @@ public final class EditorScreen extends Screen {
 
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
             this.quickActionMenu.close();
+            this.state.setEditorOpen(false);
+            MinecraftClient client = MinecraftClient.getInstance();
+            client.setScreen(new GameMenuScreen(true));
+            return true;
+        }
+
+        if ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 && keyCode == GLFW.GLFW_KEY_Z) {
+            this.state.undo();
+            return true;
+        }
+        if ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 && keyCode == GLFW.GLFW_KEY_Y) {
+            this.state.redo();
+            return true;
+        }
+        if ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 && keyCode == GLFW.GLFW_KEY_D) {
+            this.state.duplicateSelection();
+            return true;
+        }
+        if (keyCode == GLFW.GLFW_KEY_DELETE) {
+            if (this.timelinePanel != null && this.timelinePanel.handleDelete()) {
+                return true;
+            }
+            this.state.deleteSelection();
+            return true;
+        }
+        if (keyCode == GLFW.GLFW_KEY_G) {
+            this.state.setToolMode(net.dark.editorapi.client.state.EditorToolMode.TRANSLATE);
+            return true;
+        }
+        if (keyCode == GLFW.GLFW_KEY_R) {
+            this.state.setToolMode(net.dark.editorapi.client.state.EditorToolMode.ROTATE);
             return true;
         }
 
@@ -162,6 +246,17 @@ public final class EditorScreen extends Screen {
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
+    @Override
+    public boolean charTyped(char chr, int modifiers) {
+        for (int index = this.panels.size() - 1; index >= 0; index--) {
+            EditorPanel panel = this.panels.get(index);
+            if (isPanelVisible(panel) && panel.charTyped(chr, modifiers)) {
+                return true;
+            }
+        }
+        return super.charTyped(chr, modifiers);
+    }
+
     private boolean moveSelection(int keyCode, double step) {
         return switch (keyCode) {
             case GLFW.GLFW_KEY_LEFT -> nudge(-step, 0.0D, 0.0D);
@@ -173,33 +268,31 @@ public final class EditorScreen extends Screen {
     }
 
     private boolean nudge(double x, double y, double z) {
-        switch (this.state.selection().type()) {
-            case POS1 -> {
-                TriggerZone zone = this.state.selectedZone();
-                zone.setPos1(zone.pos1().add((int) x, (int) y, (int) z));
+        if (this.state.selection().type() == net.dark.editorapi.client.state.EditorSelectionType.NONE
+                || this.state.selection().type() == net.dark.editorapi.client.state.EditorSelectionType.EVENT
+                || this.state.selection().type() == net.dark.editorapi.client.state.EditorSelectionType.CUTSCENE) {
+            return false;
+        }
+        this.state.nudgeSelection(x, y, z);
+        return true;
+    }
+
+    private boolean isPanelVisible(EditorPanel panel) {
+        return switch (panel.panelKey()) {
+            case "Browser" -> this.state.browserVisible();
+            case "Inspector" -> this.state.inspectorVisible();
+            case "Timeline" -> this.state.timelineVisible();
+            default -> true;
+        };
+    }
+
+    public boolean isHoveringUi(int mouseX, int mouseY) {
+        if (this.quickActionMenu.isOpen()) {
+            return true;
+        }
+        for (EditorPanel panel : this.panels) {
+            if (isPanelVisible(panel) && panel.contains(mouseX, mouseY)) {
                 return true;
-            }
-            case POS2 -> {
-                TriggerZone zone = this.state.selectedZone();
-                zone.setPos2(zone.pos2().add((int) x, (int) y, (int) z));
-                return true;
-            }
-            case KEYFRAME -> {
-                CutsceneDefinition cutscene = this.state.selectedCutscene();
-                if (cutscene == null) {
-                    return false;
-                }
-                for (int index = 0; index < cutscene.keyframes().size(); index++) {
-                    CutsceneKeyframe keyframe = cutscene.keyframes().get(index);
-                    if (keyframe.id().equals(this.state.selection().childId())) {
-                        Vec3d moved = keyframe.position().add(x, y, z);
-                        cutscene.keyframes().set(index, keyframe.withTransform(moved, keyframe.yaw(), keyframe.pitch()));
-                        return true;
-                    }
-                }
-            }
-            default -> {
-                return false;
             }
         }
         return false;

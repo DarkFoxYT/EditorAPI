@@ -5,6 +5,10 @@ import java.util.UUID;
 public record EditorSelection(EditorSelectionType type, UUID objectId, UUID childId) {
     public static final EditorSelection NONE = new EditorSelection(EditorSelectionType.NONE, null, null);
 
+    public static EditorSelection blueprint(UUID id) {
+        return new EditorSelection(EditorSelectionType.BLUEPRINT, id, null);
+    }
+
     public static EditorSelection zone(UUID id) {
         return new EditorSelection(EditorSelectionType.ZONE, id, null);
     }

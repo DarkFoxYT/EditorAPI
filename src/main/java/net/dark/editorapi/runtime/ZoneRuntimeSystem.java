@@ -33,11 +33,11 @@ public final class ZoneRuntimeSystem {
                 state.enterTick = client.world.getTime();
                 state.lastWhileTick = client.world.getTime();
                 state.timeInsideTriggered = false;
-                trigger(zone, state, zone.triggerEnter());
+                trigger(zone, state, zone.triggerEnter(), zone.enterEventId());
             }
 
             if (state.wasInside && !inside) {
-                trigger(zone, state, zone.triggerExit());
+                trigger(zone, state, zone.triggerExit(), zone.exitEventId());
             }
 
             if (inside) {
@@ -45,12 +45,12 @@ public final class ZoneRuntimeSystem {
 
                 if (zone.triggerWhileInside() && client.world.getTime() - state.lastWhileTick >= zone.whileInsideIntervalTicks()) {
                     state.lastWhileTick = client.world.getTime();
-                    trigger(zone, state, true);
+                    trigger(zone, state, true, zone.eventId());
                 }
 
                 if (zone.triggerTimeInside() && !state.timeInsideTriggered && state.totalTicksInside >= zone.requiredTimeTicks()) {
                     state.timeInsideTriggered = true;
-                    trigger(zone, state, true);
+                    trigger(zone, state, true, zone.eventId());
                 }
             }
 
@@ -58,15 +58,15 @@ public final class ZoneRuntimeSystem {
         }
     }
 
-    private void trigger(TriggerZone zone, ZonePlayerState state, boolean enabled) {
-        if (!enabled || !canTrigger(zone, state)) {
+    private void trigger(TriggerZone zone, ZonePlayerState state, boolean enabled, UUID eventId) {
+        if (!enabled || eventId == null || !canTrigger(zone, state)) {
             return;
         }
 
         if (zone.delayTicks() > 0) {
-            this.runtime.scheduleEvent(zone.eventId().toString(), zone, zone.delayTicks());
+            this.runtime.scheduleEvent(eventId.toString(), zone, zone.delayTicks());
         } else {
-            this.runtime.executeEvent(zone.eventId(), zone);
+            this.runtime.executeEvent(eventId, zone);
         }
 
         if (zone.onceMode() == TriggerOnceMode.ONCE_GLOBAL) {

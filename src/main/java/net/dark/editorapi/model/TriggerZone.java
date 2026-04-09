@@ -24,6 +24,8 @@ public final class TriggerZone implements SceneObject {
     private TriggerOnceMode onceMode;
     private TriggerTargetMode targetMode;
     private UUID eventId;
+    private UUID enterEventId;
+    private UUID exitEventId;
     private boolean visible;
     private boolean locked;
 
@@ -44,6 +46,8 @@ public final class TriggerZone implements SceneObject {
             TriggerOnceMode onceMode,
             TriggerTargetMode targetMode,
             UUID eventId,
+            UUID enterEventId,
+            UUID exitEventId,
             boolean visible,
             boolean locked
     ) {
@@ -63,6 +67,8 @@ public final class TriggerZone implements SceneObject {
         this.onceMode = onceMode;
         this.targetMode = targetMode;
         this.eventId = eventId;
+        this.enterEventId = enterEventId;
+        this.exitEventId = exitEventId;
         this.visible = visible;
         this.locked = locked;
     }
@@ -84,6 +90,8 @@ public final class TriggerZone implements SceneObject {
                 6.0F,
                 TriggerOnceMode.NONE,
                 TriggerTargetMode.TRIGGERING_PLAYER,
+                eventId,
+                eventId,
                 eventId,
                 true,
                 false
@@ -217,6 +225,22 @@ public final class TriggerZone implements SceneObject {
 
     public void setEventId(UUID eventId) {
         this.eventId = eventId;
+    }
+
+    public UUID enterEventId() {
+        return this.enterEventId != null ? this.enterEventId : this.eventId;
+    }
+
+    public void setEnterEventId(UUID enterEventId) {
+        this.enterEventId = enterEventId;
+    }
+
+    public UUID exitEventId() {
+        return this.exitEventId != null ? this.exitEventId : this.eventId;
+    }
+
+    public void setExitEventId(UUID exitEventId) {
+        this.exitEventId = exitEventId;
     }
 
     @Override
