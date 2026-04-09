@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "editorapi",
+  "version": "${version}",
+  "name": "EditorAPI",
+  "description": "Advanced in-game editor API for trigger zones, events, and cinematic cutscenes.",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": [
+      "net.dark.editorapi.client.EditorapiDataGenerator"
+    ],
+    "client": [
+      "net.dark.editorapi.client.EditorapiClient"
+    ],
+    "main": [
+      "net.dark.editorapi.Editorapi"
+    ]
+  },
+  "mixins": [
+    "editorapi.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
