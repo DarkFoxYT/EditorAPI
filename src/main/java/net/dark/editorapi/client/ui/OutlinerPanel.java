@@ -2,9 +2,10 @@ package net.dark.editorapi.client.ui;
 
 import net.dark.editorapi.client.state.EditorClientState;
 import net.dark.editorapi.client.state.EditorSelection;
-import net.dark.editorapi.model.CutsceneDefinition;
-import net.dark.editorapi.model.EditorEventDefinition;
-import net.dark.editorapi.model.TriggerZone;
+import net.dark.editorapi.client.ui.widget.EditorPalette;
+import net.dark.editorapi.scene.EditorSceneIndex;
+import net.dark.editorapi.scene.SceneObjectType;
+import net.dark.editorapi.scene.SceneTreeNode;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -20,57 +21,60 @@ public final class OutlinerPanel extends EditorPanel {
     @Override
     protected void renderContent(DrawContext context, TextRenderer textRenderer, int mouseX, int mouseY, float delta, int contentX, int contentY, int contentWidth, int contentHeight) {
         int y = contentY;
-        y = drawSection(context, textRenderer, contentX, y, "Zones");
-        for (TriggerZone zone : this.state.project().zones().values()) {
-            boolean selected = this.state.selection().objectId() != null && this.state.selection().objectId().equals(zone.id());
-            y = drawRow(context, textRenderer, contentX, y, contentWidth, mouseX, mouseY, selected, zone.name(), "P1  P2");
-        }
-
-        y += 6;
-        y = drawSection(context, textRenderer, contentX, y, "Events");
-        for (EditorEventDefinition event : this.state.project().events().values()) {
-            boolean selected = this.state.selection().objectId() != null && this.state.selection().objectId().equals(event.id());
-            y = drawRow(context, textRenderer, contentX, y, contentWidth, mouseX, mouseY, selected, event.name(), event.actions().size() + " actions");
-        }
-
-        y += 6;
-        y = drawSection(context, textRenderer, contentX, y, "Cutscenes");
-        for (CutsceneDefinition cutscene : this.state.project().cutscenes().values()) {
-            boolean selected = this.state.selection().objectId() != null && this.state.selection().objectId().equals(cutscene.id());
-            y = drawRow(context, textRenderer, contentX, y, contentWidth, mouseX, mouseY, selected, cutscene.name(), cutscene.keyframes().size() + " keys");
+        String lastSection = "";
+        for (SceneTreeNode node : new EditorSceneIndex(this.state.project()).buildTree()) {
+            String section = switch (node.type()) {
+                case TRIGGER_ZONE -> "Zones";
+                case EVENT -> "Events";
+                case CUTSCENE, CAMERA_KEYFRAME -> "Cutscenes";
+                default -> "Scene";
+            };
+            if (!section.equals(lastSection)) {
+                if (!lastSection.isEmpty()) {
+                    y += 6;
+                }
+                y = drawSection(context, textRenderer, contentX, y, section);
+                lastSection = section;
+            }
+            boolean selected = this.state.selection().objectId() != null
+                    && this.state.selection().objectId().equals(node.objectId())
+                    && ((node.childId() == null && this.state.selection().childId() == null) || (node.childId() != null && node.childId().equals(this.state.selection().childId())));
+            int indent = node.depth() * 14;
+            y = drawRow(context, textRenderer, contentX + indent, y, contentWidth - indent, mouseX, mouseY, selected, node.label(), (node.locked() ? "L " : "") + (node.visible() ? "V " : "H ") + node.detail());
         }
     }
 
     @Override
     protected boolean onMouseClicked(double mouseX, double mouseY, int button, int contentX, int contentY, int contentWidth, int contentHeight) {
-        int y = contentY + 18;
-        for (TriggerZone zone : this.state.project().zones().values()) {
-            if (isInside(mouseX, mouseY, contentX, y, contentWidth, 18)) {
-                if (mouseX >= contentX + contentWidth - 42 && mouseX <= contentX + contentWidth - 24) {
-                    this.state.setSelection(EditorSelection.pos1(zone.id()));
-                } else if (mouseX >= contentX + contentWidth - 22 && mouseX <= contentX + contentWidth - 4) {
-                    this.state.setSelection(EditorSelection.pos2(zone.id()));
+        int y = contentY;
+        String lastSection = "";
+        for (SceneTreeNode node : new EditorSceneIndex(this.state.project()).buildTree()) {
+            String section = switch (node.type()) {
+                case TRIGGER_ZONE -> "Zones";
+                case EVENT -> "Events";
+                case CUTSCENE, CAMERA_KEYFRAME -> "Cutscenes";
+                default -> "Scene";
+            };
+            if (!section.equals(lastSection)) {
+                y += lastSection.isEmpty() ? 16 : 22;
+                lastSection = section;
+            }
+            int indent = node.depth() * 14;
+            if (isInside(mouseX, mouseY, contentX + indent, y, contentWidth - indent, 18)) {
+                if (node.type() == SceneObjectType.CAMERA_KEYFRAME) {
+                    this.state.setSelection(EditorSelection.keyframe(node.objectId(), node.childId()));
+                } else if (node.type() == SceneObjectType.TRIGGER_ZONE && mouseX >= contentX + contentWidth - 42 && mouseX <= contentX + contentWidth - 24) {
+                    this.state.setSelection(EditorSelection.pos1(node.objectId()));
+                } else if (node.type() == SceneObjectType.TRIGGER_ZONE && mouseX >= contentX + contentWidth - 22 && mouseX <= contentX + contentWidth - 4) {
+                    this.state.setSelection(EditorSelection.pos2(node.objectId()));
                 } else {
-                    this.state.setSelection(EditorSelection.zone(zone.id()));
+                    this.state.setSelection(switch (node.type()) {
+                        case TRIGGER_ZONE -> EditorSelection.zone(node.objectId());
+                        case EVENT -> EditorSelection.event(node.objectId());
+                        case CUTSCENE -> EditorSelection.cutscene(node.objectId());
+                        default -> EditorSelection.NONE;
+                    });
                 }
-                return true;
-            }
-            y += 20;
-        }
-
-        y += 24;
-        for (EditorEventDefinition event : this.state.project().events().values()) {
-            if (isInside(mouseX, mouseY, contentX, y, contentWidth, 18)) {
-                this.state.setSelection(EditorSelection.event(event.id()));
-                return true;
-            }
-            y += 20;
-        }
-
-        y += 24;
-        for (CutsceneDefinition cutscene : this.state.project().cutscenes().values()) {
-            if (isInside(mouseX, mouseY, contentX, y, contentWidth, 18)) {
-                this.state.setSelection(EditorSelection.cutscene(cutscene.id()));
                 return true;
             }
             y += 20;
@@ -79,7 +83,7 @@ public final class OutlinerPanel extends EditorPanel {
     }
 
     private int drawSection(DrawContext context, TextRenderer textRenderer, int x, int y, String title) {
-        context.drawText(textRenderer, Text.literal(title), x, y, 0xFF98A8C2, false);
+        context.drawText(textRenderer, Text.literal(title), x, y, EditorPalette.TEXT_SECTION, false);
         return y + 16;
     }
 

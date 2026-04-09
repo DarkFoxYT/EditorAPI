@@ -9,6 +9,7 @@ import net.dark.editorapi.api.action.EditorActionRegistry;
 import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
+import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -156,13 +157,10 @@ public final class BuiltinEditorActions {
             return;
         }
 
-        var particleType = Registries.PARTICLE_TYPE.get(particleId);
-        if (particleType == null) {
-            particleType = ParticleTypes.END_ROD;
-        }
+        ParticleEffect particleType = resolveParticle(particleId);
 
         Vec3d origin = context.zone().center();
-        context.world().addParticleClient(
+        context.world().addParticle(
                 particleType,
                 origin.x + data.get("offsetX").getAsDouble(),
                 origin.y + data.get("offsetY").getAsDouble(),
@@ -172,7 +170,7 @@ public final class BuiltinEditorActions {
                 0.0D
         );
         for (int index = 1; index < data.get("count").getAsInt(); index++) {
-            context.world().addParticleClient(
+            context.world().addParticle(
                     particleType,
                     origin.x + data.get("offsetX").getAsDouble(),
                     origin.y + data.get("offsetY").getAsDouble(),
@@ -182,6 +180,16 @@ public final class BuiltinEditorActions {
                     (context.world().random.nextDouble() - 0.5D) * 0.15D
             );
         }
+    }
+
+    private static ParticleEffect resolveParticle(Identifier particleId) {
+        if (particleId != null && Registries.PARTICLE_TYPE.containsId(particleId) && "minecraft:flame".equals(particleId.toString())) {
+            return ParticleTypes.FLAME;
+        }
+        if (particleId != null && Registries.PARTICLE_TYPE.containsId(particleId) && "minecraft:campfire_cosy_smoke".equals(particleId.toString())) {
+            return ParticleTypes.CAMPFIRE_COSY_SMOKE;
+        }
+        return ParticleTypes.END_ROD;
     }
 
     private static void playSound(EditorActionContext context, JsonObject data) {
@@ -196,7 +204,7 @@ public final class BuiltinEditorActions {
         }
 
         Vec3d origin = context.zone().center();
-        context.world().playSoundClient(
+        context.world().playSound(
                 origin.x,
                 origin.y,
                 origin.z,

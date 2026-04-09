@@ -20,6 +20,7 @@ public final class EditorRuntime {
     private final ZoneRuntimeSystem zones;
     private final CutscenePlaybackController cutscenes;
     private final List<ScheduledEvent> scheduledEvents = new ArrayList<>();
+    private EditorRuntimeMode mode = EditorRuntimeMode.RUNTIME;
 
     public EditorRuntime(EditorClientState editorState, EditorProject project) {
         this.editorState = editorState;
@@ -34,6 +35,14 @@ public final class EditorRuntime {
 
     public CutscenePlaybackController cutscenes() {
         return this.cutscenes;
+    }
+
+    public EditorRuntimeMode mode() {
+        return this.mode;
+    }
+
+    public void setMode(EditorRuntimeMode mode) {
+        this.mode = mode;
     }
 
     public void tick() {

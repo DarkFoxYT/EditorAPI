@@ -9,6 +9,18 @@ public enum InterpolationMode {
     EASE_IN_OUT,
     CUBIC;
 
+    public String label() {
+        return switch (this) {
+            case STEP -> "Step";
+            case LINEAR -> "Linear";
+            case SMOOTH -> "Smooth";
+            case EASE_IN -> "Ease In";
+            case EASE_OUT -> "Ease Out";
+            case EASE_IN_OUT -> "Ease In-Out";
+            case CUBIC -> "Cubic";
+        };
+    }
+
     public double apply(double value) {
         return switch (this) {
             case STEP -> 0.0D;

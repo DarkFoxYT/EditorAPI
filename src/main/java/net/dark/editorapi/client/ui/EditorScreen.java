@@ -15,19 +15,35 @@ import org.lwjgl.glfw.GLFW;
 public final class EditorScreen extends Screen {
     private final EditorClientState state;
     private final List<EditorPanel> panels = new ArrayList<>();
+    private final QuickActionMenu quickActionMenu;
+    private BrowserPanel browserPanel;
+    private TimelinePanel timelinePanel;
 
     public EditorScreen(EditorClientState state) {
         super(Text.literal("EditorAPI"));
         this.state = state;
+        this.quickActionMenu = new QuickActionMenu(state);
     }
 
     @Override
     protected void init() {
         this.panels.clear();
-        this.panels.add(new ToolbarPanel(this.state, 10, 10, 220, 170));
-        this.panels.add(new OutlinerPanel(this.state, 10, 190, 250, 240));
-        this.panels.add(new InspectorPanel(this.state, this.width - 270, 10, 260, 280));
-        this.panels.add(new TimelinePanel(this.state, 270, this.height - 170, this.width - 540, 160));
+        int menuWidth = Math.min(this.width - 8, 260);
+        int browserWidth = Math.max(170, Math.min(220, this.width / 5));
+        int inspectorWidth = Math.max(180, Math.min(220, this.width / 4));
+        int timelineHeight = Math.max(100, Math.min(126, this.height / 4));
+        int contentWidth = Math.max(240, this.width - browserWidth - inspectorWidth - 16);
+
+        this.panels.add(new MenuBarPanel(this.state, 4, 2, menuWidth));
+        this.browserPanel = new BrowserPanel(this.state, 4, 20, browserWidth, this.height - 24);
+        this.panels.add(this.browserPanel);
+        this.panels.add(new InspectorPanel(this.state, this.width - inspectorWidth - 4, 20, inspectorWidth, Math.max(140, this.height - 24)));
+        this.timelinePanel = new TimelinePanel(this.state, browserWidth + 8, this.height - timelineHeight - 4, contentWidth, timelineHeight);
+        this.panels.add(this.timelinePanel);
+
+        this.panels.get(0).setLocked(true);
+        this.panels.get(1).setLocked(true);
+        this.panels.get(2).setLocked(true);
     }
 
     @Override
@@ -43,16 +59,27 @@ public final class EditorScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
-        context.fillGradient(0, 0, this.width, this.height, 0xAA0A0C11, 0xCC090B10);
-        context.drawText(this.textRenderer, Text.literal("EditorAPI  |  F6 Toggle  |  F7 Pos1  |  F8 Pos2  |  F9 Add Key"), 12, this.height - 14, 0xFFAFBDD4, false);
         for (EditorPanel panel : this.panels) {
             panel.render(context, this.textRenderer, mouseX, mouseY, delta);
         }
+        this.quickActionMenu.render(context, this.textRenderer, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 1) {
+            this.quickActionMenu.open((int) mouseX, (int) mouseY, switch (this.browserPanel.activeTab()) {
+                case SCENE -> QuickActionMenu.Context.SCENE;
+                case EVENTS -> QuickActionMenu.Context.EVENTS;
+                case CUTSCENES -> QuickActionMenu.Context.CUTSCENES;
+            });
+            return true;
+        }
+
+        if (this.quickActionMenu.isOpen() && this.quickActionMenu.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+
         for (int index = this.panels.size() - 1; index >= 0; index--) {
             EditorPanel panel = this.panels.get(index);
             if (panel.mouseClicked(mouseX, mouseY, button)) {
@@ -60,6 +87,9 @@ public final class EditorScreen extends Screen {
                 this.panels.add(panel);
                 return true;
             }
+        }
+        if (button == 0) {
+            return this.state.pickHoveredGizmo();
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -86,8 +116,29 @@ public final class EditorScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_SPACE) {
+            if (this.timelinePanel != null && this.timelinePanel.handleSpacebar()) {
+                return true;
+            }
+        }
+
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-            close();
+            this.quickActionMenu.close();
+            return true;
+        }
+
+        if (keyCode == GLFW.GLFW_KEY_ENTER && this.state.selectedCutscene() != null) {
+            this.state.addCurrentCameraKeyframe();
+            return true;
+        }
+
+        if (this.state.selectedCutscene() != null && (keyCode == GLFW.GLFW_KEY_KP_ADD || keyCode == GLFW.GLFW_KEY_EQUAL)) {
+            this.state.addCurrentCameraKeyframe();
+            return true;
+        }
+
+        if (this.state.selectedCutscene() != null && keyCode == GLFW.GLFW_KEY_BACKSPACE) {
+            this.state.runtime().cutscenes().stop();
             return true;
         }
 

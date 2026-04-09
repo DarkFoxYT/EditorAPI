@@ -1,11 +1,13 @@
 package net.dark.editorapi.model;
 
 import java.util.UUID;
+import net.dark.editorapi.scene.SceneObject;
+import net.dark.editorapi.scene.SceneObjectType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
-public final class TriggerZone {
+public final class TriggerZone implements SceneObject {
     private final UUID id;
     private String name;
     private BlockPos pos1;
@@ -22,6 +24,8 @@ public final class TriggerZone {
     private TriggerOnceMode onceMode;
     private TriggerTargetMode targetMode;
     private UUID eventId;
+    private boolean visible;
+    private boolean locked;
 
     public TriggerZone(
             UUID id,
@@ -39,7 +43,9 @@ public final class TriggerZone {
             float radius,
             TriggerOnceMode onceMode,
             TriggerTargetMode targetMode,
-            UUID eventId
+            UUID eventId,
+            boolean visible,
+            boolean locked
     ) {
         this.id = id;
         this.name = name;
@@ -57,6 +63,8 @@ public final class TriggerZone {
         this.onceMode = onceMode;
         this.targetMode = targetMode;
         this.eventId = eventId;
+        this.visible = visible;
+        this.locked = locked;
     }
 
     public static TriggerZone createDefault(String name, UUID eventId) {
@@ -76,7 +84,9 @@ public final class TriggerZone {
                 6.0F,
                 TriggerOnceMode.NONE,
                 TriggerTargetMode.TRIGGERING_PLAYER,
-                eventId
+                eventId,
+                true,
+                false
         );
     }
 
@@ -86,6 +96,11 @@ public final class TriggerZone {
 
     public String name() {
         return this.name;
+    }
+
+    @Override
+    public SceneObjectType type() {
+        return SceneObjectType.TRIGGER_ZONE;
     }
 
     public void setName(String name) {
@@ -202,6 +217,24 @@ public final class TriggerZone {
 
     public void setEventId(UUID eventId) {
         this.eventId = eventId;
+    }
+
+    @Override
+    public boolean visible() {
+        return this.visible;
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
+
+    @Override
+    public boolean locked() {
+        return this.locked;
+    }
+
+    public void setLocked(boolean locked) {
+        this.locked = locked;
     }
 
     public Box box() {

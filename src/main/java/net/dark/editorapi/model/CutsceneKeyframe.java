@@ -9,17 +9,24 @@ public record CutsceneKeyframe(
         Vec3d position,
         float yaw,
         float pitch,
+        float roll,
+        float fov,
+        float sway,
         InterpolationMode interpolation
 ) {
     public CutsceneKeyframe withFrame(int newFrame) {
-        return new CutsceneKeyframe(this.id, newFrame, this.position, this.yaw, this.pitch, this.interpolation);
+        return new CutsceneKeyframe(this.id, newFrame, this.position, this.yaw, this.pitch, this.roll, this.fov, this.sway, this.interpolation);
     }
 
     public CutsceneKeyframe withTransform(Vec3d newPosition, float newYaw, float newPitch) {
-        return new CutsceneKeyframe(this.id, this.frame, newPosition, newYaw, newPitch, this.interpolation);
+        return new CutsceneKeyframe(this.id, this.frame, newPosition, newYaw, newPitch, this.roll, this.fov, this.sway, this.interpolation);
+    }
+
+    public CutsceneKeyframe withCameraSettings(float newRoll, float newFov, float newSway) {
+        return new CutsceneKeyframe(this.id, this.frame, this.position, this.yaw, this.pitch, newRoll, newFov, newSway, this.interpolation);
     }
 
     public CutsceneKeyframe withInterpolation(InterpolationMode mode) {
-        return new CutsceneKeyframe(this.id, this.frame, this.position, this.yaw, this.pitch, mode);
+        return new CutsceneKeyframe(this.id, this.frame, this.position, this.yaw, this.pitch, this.roll, this.fov, this.sway, mode);
     }
 }

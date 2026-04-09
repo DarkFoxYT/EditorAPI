@@ -17,7 +17,7 @@ public final class ToolbarPanel extends EditorPanel {
     protected void renderContent(DrawContext context, TextRenderer textRenderer, int mouseX, int mouseY, float delta, int contentX, int contentY, int contentWidth, int contentHeight) {
         int buttonWidth = (contentWidth - 6) / 2;
         int buttonHeight = 18;
-        String[] labels = {"New Zone", "New Event", "New Cut", "Set Pos1", "Set Pos2", "Save", "Reload", "Add Key", "Play", "Stop", "+Title", "+Sound", "+FX", "+Cut"};
+        String[] labels = {"New Zone", "New Event", "New Cut", "Set Pos1", "Set Pos2", "Save", "Reload", "Sync", "Add Key", "Play", "Stop", "+Title", "+Sound", "+FX", "+Cut", "+Event"};
         for (int index = 0; index < labels.length; index++) {
             int x = contentX + (index % 2) * (buttonWidth + 6);
             int y = contentY + (index / 2) * (buttonHeight + 6);
@@ -29,7 +29,7 @@ public final class ToolbarPanel extends EditorPanel {
     protected boolean onMouseClicked(double mouseX, double mouseY, int button, int contentX, int contentY, int contentWidth, int contentHeight) {
         int buttonWidth = (contentWidth - 6) / 2;
         int buttonHeight = 18;
-        for (int index = 0; index < 14; index++) {
+        for (int index = 0; index < 16; index++) {
             int x = contentX + (index % 2) * (buttonWidth + 6);
             int y = contentY + (index / 2) * (buttonHeight + 6);
             if (!isInside(mouseX, mouseY, x, y, buttonWidth, buttonHeight)) {
@@ -44,17 +44,19 @@ public final class ToolbarPanel extends EditorPanel {
                 case 4 -> this.state.capturePos2();
                 case 5 -> this.state.save();
                 case 6 -> this.state.reload();
-                case 7 -> this.state.addCurrentCameraKeyframe();
-                case 8 -> {
+                case 7 -> this.state.requestProjectSync();
+                case 8 -> this.state.addCurrentCameraKeyframe();
+                case 9 -> {
                     if (this.state.selectedCutscene() != null) {
                         this.state.runtime().cutscenes().start(this.state.selectedCutscene().id().toString());
                     }
                 }
-                case 9 -> this.state.runtime().cutscenes().stop();
-                case 10 -> this.state.addActionToSelectedEvent(BuiltinEditorActions.SHOW_TITLE);
-                case 11 -> this.state.addActionToSelectedEvent(BuiltinEditorActions.PLAY_SOUND);
-                case 12 -> this.state.addActionToSelectedEvent(BuiltinEditorActions.SPAWN_PARTICLES);
-                case 13 -> this.state.addActionToSelectedEvent(BuiltinEditorActions.PLAY_CUTSCENE);
+                case 10 -> this.state.runtime().cutscenes().stop();
+                case 11 -> this.state.addActionToSelectedEvent(BuiltinEditorActions.SHOW_TITLE);
+                case 12 -> this.state.addActionToSelectedEvent(BuiltinEditorActions.PLAY_SOUND);
+                case 13 -> this.state.addActionToSelectedEvent(BuiltinEditorActions.SPAWN_PARTICLES);
+                case 14 -> this.state.addActionToSelectedEvent(BuiltinEditorActions.PLAY_CUTSCENE);
+                case 15 -> this.state.addActionToSelectedEvent(BuiltinEditorActions.RUN_EVENT);
                 default -> {
                 }
             }

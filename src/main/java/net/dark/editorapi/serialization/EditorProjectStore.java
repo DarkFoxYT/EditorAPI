@@ -89,6 +89,8 @@ public final class EditorProjectStore {
             json.addProperty("onceMode", zone.onceMode().name());
             json.addProperty("targetMode", zone.targetMode().name());
             json.addProperty("eventId", zone.eventId().toString());
+            json.addProperty("visible", zone.visible());
+            json.addProperty("locked", zone.locked());
             zones.add(json);
         }
 
@@ -97,6 +99,8 @@ public final class EditorProjectStore {
             JsonObject json = new JsonObject();
             json.addProperty("id", event.id().toString());
             json.addProperty("name", event.name());
+            json.addProperty("visible", event.visible());
+            json.addProperty("locked", event.locked());
             JsonArray actions = new JsonArray();
             for (EditorActionInstance action : event.actions()) {
                 JsonObject actionJson = new JsonObject();
@@ -118,6 +122,8 @@ public final class EditorProjectStore {
             json.addProperty("loop", cutscene.loop());
             json.addProperty("showPreview", cutscene.showPreview());
             json.addProperty("autoKeyframe", cutscene.autoKeyframe());
+            json.addProperty("visible", cutscene.visible());
+            json.addProperty("locked", cutscene.locked());
             JsonArray keyframes = new JsonArray();
             for (CutsceneKeyframe keyframe : cutscene.keyframes()) {
                 JsonObject keyframeJson = new JsonObject();
@@ -126,6 +132,9 @@ public final class EditorProjectStore {
                 keyframeJson.add("position", writeVec3(keyframe.position()));
                 keyframeJson.addProperty("yaw", keyframe.yaw());
                 keyframeJson.addProperty("pitch", keyframe.pitch());
+                keyframeJson.addProperty("roll", keyframe.roll());
+                keyframeJson.addProperty("fov", keyframe.fov());
+                keyframeJson.addProperty("sway", keyframe.sway());
                 keyframeJson.addProperty("interpolation", keyframe.interpolation().name());
                 keyframes.add(keyframeJson);
             }
@@ -156,7 +165,9 @@ public final class EditorProjectStore {
             EditorEventDefinition event = new EditorEventDefinition(
                     UUID.fromString(json.get("id").getAsString()),
                     json.get("name").getAsString(),
-                    actions
+                    actions,
+                    !json.has("visible") || json.get("visible").getAsBoolean(),
+                    json.has("locked") && json.get("locked").getAsBoolean()
             );
             project.events().put(event.id(), event);
         }
@@ -180,7 +191,9 @@ public final class EditorProjectStore {
                     json.get("radius").getAsFloat(),
                     TriggerOnceMode.valueOf(json.get("onceMode").getAsString()),
                     TriggerTargetMode.valueOf(json.get("targetMode").getAsString()),
-                    UUID.fromString(json.get("eventId").getAsString())
+                    UUID.fromString(json.get("eventId").getAsString()),
+                    !json.has("visible") || json.get("visible").getAsBoolean(),
+                    json.has("locked") && json.get("locked").getAsBoolean()
             );
             project.zones().put(zone.id(), zone);
         }
@@ -197,6 +210,9 @@ public final class EditorProjectStore {
                         readVec3(keyframeJson.getAsJsonObject("position")),
                         keyframeJson.get("yaw").getAsFloat(),
                         keyframeJson.get("pitch").getAsFloat(),
+                        keyframeJson.has("roll") ? keyframeJson.get("roll").getAsFloat() : 0.0F,
+                        keyframeJson.has("fov") ? keyframeJson.get("fov").getAsFloat() : 70.0F,
+                        keyframeJson.has("sway") ? keyframeJson.get("sway").getAsFloat() : 0.0F,
                         InterpolationMode.valueOf(keyframeJson.get("interpolation").getAsString())
                 ));
             }
@@ -208,6 +224,8 @@ public final class EditorProjectStore {
                     json.get("loop").getAsBoolean(),
                     json.get("showPreview").getAsBoolean(),
                     json.get("autoKeyframe").getAsBoolean(),
+                    !json.has("visible") || json.get("visible").getAsBoolean(),
+                    json.has("locked") && json.get("locked").getAsBoolean(),
                     keyframes
             );
             project.cutscenes().put(cutscene.id(), cutscene);

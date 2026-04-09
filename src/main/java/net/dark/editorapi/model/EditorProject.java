@@ -55,8 +55,8 @@ public final class EditorProject {
         }
 
         CutsceneDefinition cutscene = createCutscene("Opening Shot");
-        cutscene.keyframes().add(new CutsceneKeyframe(UUID.randomUUID(), 0, BlockPos.ORIGIN.toCenterPos().add(0.0D, 2.0D, 0.0D), 0.0F, 10.0F, InterpolationMode.SMOOTH));
-        cutscene.keyframes().add(new CutsceneKeyframe(UUID.randomUUID(), 60, BlockPos.ORIGIN.toCenterPos().add(6.0D, 3.0D, 6.0D), -135.0F, 15.0F, InterpolationMode.EASE_IN_OUT));
+        cutscene.keyframes().add(new CutsceneKeyframe(UUID.randomUUID(), 0, BlockPos.ORIGIN.toCenterPos().add(0.0D, 2.0D, 0.0D), 0.0F, 10.0F, 0.0F, 70.0F, 0.0F, InterpolationMode.SMOOTH));
+        cutscene.keyframes().add(new CutsceneKeyframe(UUID.randomUUID(), 60, BlockPos.ORIGIN.toCenterPos().add(6.0D, 3.0D, 6.0D), -135.0F, 15.0F, 0.0F, 80.0F, 0.15F, InterpolationMode.EASE_IN_OUT));
         createZone("Demo Trigger");
     }
 }

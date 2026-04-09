@@ -3,7 +3,6 @@ package net.dark.editorapi.runtime;
 import java.util.UUID;
 import net.dark.editorapi.model.CutsceneDefinition;
 import net.dark.editorapi.model.EditorProject;
-import net.minecraft.client.render.Camera;
 
 public final class CutscenePlaybackController {
     private final EditorProject project;
@@ -81,15 +80,13 @@ public final class CutscenePlaybackController {
         return this.activeCutsceneId == null ? null : this.project.cutscenes().get(this.activeCutsceneId);
     }
 
-    public void applyCamera(Camera camera, UUID previewCutsceneId, boolean previewEnabled) {
+    public CutsceneDefinition.SampledCutsceneFrame sampledPreview(UUID previewCutsceneId, boolean previewEnabled) {
         CutsceneDefinition cutscene = this.playing ? getActiveCutscene() : previewEnabled && previewCutsceneId != null ? this.project.cutscenes().get(previewCutsceneId) : null;
         if (cutscene == null || cutscene.keyframes().isEmpty()) {
-            return;
+            return null;
         }
 
         double frame = this.playing ? this.currentFrame : this.previewFrame;
-        CutsceneDefinition.SampledCutsceneFrame sampled = cutscene.sample(frame);
-        camera.setPos(sampled.position());
-        camera.setRotation(sampled.yaw(), sampled.pitch());
+        return cutscene.sample(frame);
     }
 }
