@@ -1,0 +1,53 @@
+{
+  "targets": [
+    "editorapi_swap_a",
+    "editorapi_swap_b",
+    "editorapi_composite"
+  ],
+  "passes": [
+    {
+      "name": "box_blur",
+      "intarget": "minecraft:main",
+      "outtarget": "editorapi_swap_a",
+      "use_linear_filter": true,
+      "uniforms": [
+        {
+          "name": "BlurDir",
+          "values": [ 1.0, 0.0 ]
+        }
+      ]
+    },
+    {
+      "name": "box_blur",
+      "intarget": "editorapi_swap_a",
+      "outtarget": "editorapi_swap_b",
+      "use_linear_filter": true,
+      "uniforms": [
+        {
+          "name": "BlurDir",
+          "values": [ 0.0, 1.0 ]
+        }
+      ]
+    },
+    {
+      "name": "deapth_of_field_composite",
+      "intarget": "minecraft:main",
+      "outtarget": "editorapi_composite",
+      "auxtargets": [
+        {
+          "name": "BlurredSampler",
+          "id": "editorapi_swap_b"
+        },
+        {
+          "name": "DiffuseDepthSampler",
+          "id": "minecraft:main:depth"
+        }
+      ]
+    },
+    {
+      "name": "blit",
+      "intarget": "editorapi_composite",
+      "outtarget": "minecraft:main"
+    }
+  ]
+}

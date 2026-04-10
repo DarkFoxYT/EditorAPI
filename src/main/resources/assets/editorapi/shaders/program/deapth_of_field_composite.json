@@ -1,0 +1,26 @@
+{
+  "blend": {
+    "func": "add",
+    "srcrgb": "one",
+    "dstrgb": "zero"
+  },
+  "vertex": "deapth_of_field_composite",
+  "fragment": "deapth_of_field_composite",
+  "attributes": [ "Position" ],
+  "samplers": [
+    { "name": "DiffuseSampler" },
+    { "name": "BlurredSampler" },
+    { "name": "DiffuseDepthSampler" }
+  ],
+  "uniforms": [
+    { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "OutSize", "type": "float", "count": 2, "values": [ 1.0, 1.0 ] },
+    { "name": "FocusDistance", "type": "float", "count": 1, "values": [ 6.0 ] },
+    { "name": "FocusBand", "type": "float", "count": 1, "values": [ 2.4 ] },
+    { "name": "Transition", "type": "float", "count": 1, "values": [ 4.8 ] },
+    { "name": "NearBlurStrength", "type": "float", "count": 1, "values": [ 1.0 ] },
+    { "name": "FarBlurStrength", "type": "float", "count": 1, "values": [ 0.9 ] },
+    { "name": "NearPlane", "type": "float", "count": 1, "values": [ 0.05 ] },
+    { "name": "FarPlane", "type": "float", "count": 1, "values": [ 128.0 ] }
+  ]
+}
